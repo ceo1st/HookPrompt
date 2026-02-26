@@ -68,6 +68,12 @@ function shouldFilter(input) {
         return true;
     }
 
+    // Claude Code 内部系统消息 - 精确匹配已知标签，避免误杀用户的 HTML/JSX 输入
+    const systemTagPattern = /^<(task-notification|system-reminder|tool-result|tool-use|agent-response|claude-internal)[\s>]/;
+    if (systemTagPattern.test(trimmed)) {
+        return true;
+    }
+
     // 简单交互式回复 - 不需要优化
     const simpleResponses = [
         '好的', '是的', '继续', '谢谢', 'ok', 'OK', 'yes', 'YES',
@@ -94,7 +100,7 @@ function shouldFilter(input) {
 function buildOptimizationRequest(template, userInput) {
     // 强制指令放在最前面，优先级最高
     const forceInstruction = `<MANDATORY_FORMAT_INSTRUCTION>
-【强制格式要求 - 违反即回复失败】
+【回复格式说明】
 
 你的回复必须严格按以下顺序输出，不得跳过任何部分：
 
@@ -112,7 +118,7 @@ function buildOptimizationRequest(template, userInput) {
 
 4. 最后是分隔线 --- 后执行任务内容
 
-⚠️ 警告：如果你的回复不是以「📝 **原始输入**：」开头，用户会认为hook失效，这是严重错误！
+请在回复开头先展示对用户输入的理解（原始输入 + 优化后的结构化版本），然后再执行任务。这样用户可以看到提示词是如何被优化的。
 </MANDATORY_FORMAT_INSTRUCTION>
 
 ---
