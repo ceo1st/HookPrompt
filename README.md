@@ -1,3 +1,5 @@
+[中文](./README.md) | [English](./README_EN.md)
+
 # 提示词自动优化 Hook
 
 <div align="center">
