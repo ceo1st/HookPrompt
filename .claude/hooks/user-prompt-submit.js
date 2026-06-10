@@ -65,6 +65,24 @@ function fencedBlock(content, lang = 'text') {
     return `${fence}${lang}\n${text}\n${fence}`;
 }
 
+function decodeXmlEntities(value) {
+    return String(value ?? '')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/&amp;/g, '&');
+}
+
+function extractCodexDelegationInput(value) {
+    const text = String(value ?? '').trim();
+    const match = text.match(/^<codex_delegation\b[\s\S]*?<input>([\s\S]*?)<\/input>[\s\S]*<\/codex_delegation>\s*$/i);
+    if (!match) {
+        return text;
+    }
+    return decodeXmlEntities(match[1]).trim();
+}
+
 /**
  * 检查输入是否应该被过滤（不优化）
  * ⚠️ 注意：此函数内不能写日志！否则会被过滤的输入也会产生日志输出
@@ -196,7 +214,7 @@ function parseHookInput(rawInput) {
 
         // 检查是否有 prompt 字段（最常见的格式）
         if (parsed.prompt) {
-            return parsed.prompt;
+            return extractCodexDelegationInput(parsed.prompt);
         }
 
         // 检查是否有 messages 数组（新格式）
@@ -204,15 +222,15 @@ function parseHookInput(rawInput) {
             // 获取最后一条用户消息
             const lastMessage = parsed.messages[parsed.messages.length - 1];
             if (lastMessage.role === 'user' && lastMessage.content) {
-                return lastMessage.content;
+                return extractCodexDelegationInput(lastMessage.content);
             }
         }
 
         // 如果都没有，返回原始输入
-        return rawInput;
+        return extractCodexDelegationInput(rawInput);
     } catch (e) {
         // 如果不是JSON，返回原始输入（可能是纯文本）
-        return rawInput;
+        return extractCodexDelegationInput(rawInput);
     }
 }
 

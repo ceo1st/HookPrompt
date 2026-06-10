@@ -50,6 +50,24 @@ const testCases = [
         expectOptimization: false
     },
     {
+        name: 'Codex委托普通输入（应提取input并触发优化）',
+        input: JSON.stringify({
+            hook_event_name: 'UserPromptSubmit',
+            prompt: '<codex_delegation>\n  <source_thread_id>source</source_thread_id>\n  <input>帮我写一句话说明：HookPrompt 普通用户输入测试。</input>\n</codex_delegation>'
+        }),
+        expectOptimization: true,
+        expectContains: '帮我写一句话说明：HookPrompt 普通用户输入测试。',
+        expectNotContains: '<codex_delegation>'
+    },
+    {
+        name: 'Codex委托内部目标续跑（应跳过优化）',
+        input: JSON.stringify({
+            hook_event_name: 'UserPromptSubmit',
+            prompt: '<codex_delegation>\n  <source_thread_id>source</source_thread_id>\n  <input>&lt;codex_internal_context source=&quot;goal&quot;&gt;\nContinue working toward the active thread goal.\n\n&lt;objective&gt;\n继续处理课程正文\n&lt;/objective&gt;\n&lt;/codex_internal_context&gt;</input>\n</codex_delegation>'
+        }),
+        expectOptimization: false
+    },
+    {
         name: 'Markdown标题输入（应安全包裹，避免渲染成标题）',
         input: JSON.stringify({
             hook_event_name: 'UserPromptSubmit',
